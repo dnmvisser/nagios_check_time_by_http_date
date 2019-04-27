@@ -29,6 +29,7 @@ import requests
 import datetime
 import pytz
 import email.utils
+import urllib3
 
 def nagios_exit(message, code):
     print(message)
@@ -71,6 +72,7 @@ try:
     timeout = args.timeout
     verify = args.verify
 
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     req = requests.head(url, timeout=timeout, verify=verify)
 
 
