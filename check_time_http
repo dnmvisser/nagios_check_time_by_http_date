@@ -89,9 +89,9 @@ try:
     if 'Date' in req.headers:
         http_date = email.utils.parsedate_to_datetime(req.headers['Date'])
         offset = int((utc_now - http_date).total_seconds())
-        message = "Offset is {0} seconds" . format(offset)
+        message = "Offset is {0} seconds".format(offset)
         if(verbose):
-            message +=  ", URL: {0}" . format(url)
+            message += ", URL: {0}".format(url)
 
         if(abs(offset) > crit):
             crit_msg.append(message)
@@ -100,7 +100,7 @@ try:
         else:
             ok_msg.append(message)
     else:
-        unknown_msg.append("No Date header detected.")
+        unknown_msg.append("No Date header detected for {0}".format(url))
 except Exception as e:
     unknown_msg.append("{0}.".format(e))
 
