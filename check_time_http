@@ -44,7 +44,8 @@ unknown_msg = []
 try:
     parser = argparse.ArgumentParser(description=
         'Check time offset of the HTTP "Date" response header against the local time')
-    parser.add_argument('--url', help='the URL to check', required=True)
+    parser.add_argument('--url', '-u',
+                        help='the URL to check', required=True)
     # https://kantarainitiative.github.io/SAMLprofiles/saml2int.html#_clock_skew
     parser.add_argument('--warn', '-w',
                         help='Offset to result in warning (seconds, default 180)',
