@@ -1,4 +1,28 @@
 #!/usr/bin/env python3
+#
+# MIT License
+# Copyright (c) 2019 Dick Visser
+#
+# https://github.com/dnmvisser/nagios_check_time_by_http_date
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import argparse
 import sys
 import requests
@@ -9,6 +33,12 @@ import email.utils
 def nagios_exit(message, code):
     print(message)
     sys.exit(code)
+
+# start with clean slate
+ok_msg = []
+warn_msg = []
+crit_msg = []
+unknown_msg = []
 
 try:
     parser = argparse.ArgumentParser(description=
@@ -21,18 +51,28 @@ try:
     parser.add_argument('--crit',
                         help='Offset to result in critical (seconds, default 300)',
                         required=False, type=int, default=300)
+    parser.add_argument('--timeout',
+                        help='Timeout of the HTTP request (seconds)',
+                        required=False, type=int)
+
+    verify_parser = parser.add_mutually_exclusive_group(required=False)
+    verify_parser.add_argument('--verify', dest='verify', action='store_true',
+            help="Verify SSL certificate (default)")
+    verify_parser.add_argument('--no-verify', dest='verify', action='store_false',
+            help="Do not verify SSL certificate")
+    parser.set_defaults(verify=True)
+
+
     args = parser.parse_args()
 
     url = args.url
     warn = args.warn
     crit = args.crit
+    timeout = args.timeout
+    verify = args.verify
 
-    req = requests.head(url)
+    req = requests.head(url, timeout=timeout, verify=verify)
 
-    # start with clean slate
-    ok_msg = []
-    warn_msg = []
-    crit_msg = []
 
     # Date with time zone
     utc_now = pytz.utc.localize(datetime.datetime.utcnow().replace(microsecond=0))
@@ -48,12 +88,14 @@ try:
         else:
             ok_msg.append(message)
     else:
-        crit_msg.append("No Date header detected.")
+        unknown_msg.append("No Date header detected.")
 except Exception as e:
-    nagios_exit("UNKNOWN: Unknown error: {0}.".format(e), 3)
+    unknown_msg.append("UNKNOWN: Unknown error: {0}.".format(e))
 
 # Exit with accumulated message(s)
-if crit_msg:
+if unknown_msg:
+    nagios_exit("UNKNOWN: " + ' '.join(unknown_msg), 3)
+elif crit_msg:
     nagios_exit("CRITICAL: " + ' '.join(crit_msg + warn_msg), 2)
 elif warn_msg:
     nagios_exit("WARNING: " + ' '.join(warn_msg), 1)
