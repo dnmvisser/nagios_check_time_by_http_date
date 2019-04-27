@@ -14,7 +14,7 @@ $ ./check_time_http --help
 usage: check_time_http [-h] --url URL [--warn WARN] [--crit CRIT]
                        [--timeout TIMEOUT] [--verify | --no-verify]
 
-Check time offset from HTTP "Date" header against local time
+Check time offset of the HTTP "Date" response header against the local time
 
 optional arguments:
   -h, --help         show this help message and exit
