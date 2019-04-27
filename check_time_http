@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+import argparse
+import sys
+import requests
+import datetime
+import pytz
+import email.utils
+
+def nagios_exit(message, code):
+    print(message)
+    sys.exit(code)
+
+try:
+    parser = argparse.ArgumentParser(description=
+        'Check time offset from HTTP "Date" header against local time')
+    parser.add_argument('--url', help='the URL to check', required=True)
+    # https://kantarainitiative.github.io/SAMLprofiles/saml2int.html#_clock_skew
+    parser.add_argument('--warn',
+                        help='Offset to result in warning (seconds, default 180)',
+                        required=False, type=int, default=180)
+    parser.add_argument('--crit',
+                        help='Offset to result in critical (seconds, default 300)',
+                        required=False, type=int, default=300)
+    args = parser.parse_args()
+
+    url = args.url
+    warn = args.warn
+    crit = args.crit
+
+    req = requests.head(url)
+
+    # start with clean slate
+    ok_msg = []
+    warn_msg = []
+    crit_msg = []
+
+    # Date with time zone
+    utc_now = pytz.utc.localize(datetime.datetime.utcnow().replace(microsecond=0))
+
+    if 'Date' in req.headers:
+        http_date = email.utils.parsedate_to_datetime(req.headers['Date'])
+        offset = int((utc_now - http_date).total_seconds())
+        message = "Offset is {0} seconds." . format(offset)
+        if(abs(offset) > crit):
+            crit_msg.append(message)
+        elif(abs(offset) > warn):
+            warn_msg.append(message)
+        else:
+            ok_msg.append(message)
+    else:
+        crit_msg.append("No Date header detected.")
+except Exception as e:
+    nagios_exit("UNKNOWN: Unknown error: {0}.".format(e), 3)
+
+# Exit with accumulated message(s)
+if crit_msg:
+    nagios_exit("CRITICAL: " + ' '.join(crit_msg + warn_msg), 2)
+elif warn_msg:
+    nagios_exit("WARNING: " + ' '.join(warn_msg), 1)
+else:
+    nagios_exit("OK: " + ' '.join(ok_msg), 0)
