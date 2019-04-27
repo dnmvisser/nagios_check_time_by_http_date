@@ -92,7 +92,7 @@ try:
     else:
         unknown_msg.append("No Date header detected.")
 except Exception as e:
-    unknown_msg.append("UNKNOWN: Unknown error: {0}.".format(e))
+    unknown_msg.append("{0}.".format(e))
 
 # Exit with accumulated message(s)
 if unknown_msg:
