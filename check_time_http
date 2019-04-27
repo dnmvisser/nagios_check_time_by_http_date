@@ -82,16 +82,17 @@ try:
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     req = requests.head(url, timeout=timeout, verify=verify)
 
-
     # Date with time zone
     utc_now = pytz.utc.localize(datetime.datetime.utcnow().replace(microsecond=0))
 
     if 'Date' in req.headers:
         http_date = email.utils.parsedate_to_datetime(req.headers['Date'])
-        offset = int((utc_now - http_date).total_seconds())
+        offset = int((http_date - utc_now).total_seconds())
         message = "Offset is {0} seconds".format(offset)
         if(verbose):
             message += ", URL: {0}".format(url)
+            message += ", local date: {0}".format(utc_now)
+            message += ", HTTP headers: {0}".format(req.headers)
 
         if(abs(offset) > crit):
             crit_msg.append(message)
