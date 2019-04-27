@@ -46,20 +46,25 @@ try:
         'Check time offset of the HTTP "Date" response header against the local time')
     parser.add_argument('--url', help='the URL to check', required=True)
     # https://kantarainitiative.github.io/SAMLprofiles/saml2int.html#_clock_skew
-    parser.add_argument('--warn',
+    parser.add_argument('--warn', '-w',
                         help='Offset to result in warning (seconds, default 180)',
                         required=False, type=int, default=180)
-    parser.add_argument('--crit',
+    parser.add_argument('--crit', '-c',
                         help='Offset to result in critical (seconds, default 300)',
                         required=False, type=int, default=300)
-    parser.add_argument('--timeout',
+    parser.add_argument('--timeout', '-t',
                         help='Timeout of the HTTP request (seconds)',
                         required=False, type=int)
+    parser.add_argument('--verbose', '-v',
+                        help='Return verbose output',
+                        required=False, dest='verbose', action='store_true')
 
     verify_parser = parser.add_mutually_exclusive_group(required=False)
-    verify_parser.add_argument('--verify', dest='verify', action='store_true',
+    verify_parser.add_argument('--verify',
+            dest='verify', action='store_true',
             help="Verify SSL certificate (default)")
-    verify_parser.add_argument('--no-verify', dest='verify', action='store_false',
+    verify_parser.add_argument('--no-verify',
+            dest='verify', action='store_false',
             help="Do not verify SSL certificate")
     parser.set_defaults(verify=True)
 
@@ -71,6 +76,7 @@ try:
     crit = args.crit
     timeout = args.timeout
     verify = args.verify
+    verbose = args.verbose
 
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     req = requests.head(url, timeout=timeout, verify=verify)
@@ -82,7 +88,10 @@ try:
     if 'Date' in req.headers:
         http_date = email.utils.parsedate_to_datetime(req.headers['Date'])
         offset = int((utc_now - http_date).total_seconds())
-        message = "Offset is {0} seconds." . format(offset)
+        message = "Offset is {0} seconds" . format(offset)
+        if(verbose):
+            message +=  ", URL: {0}" . format(url)
+
         if(abs(offset) > crit):
             crit_msg.append(message)
         elif(abs(offset) > warn):
