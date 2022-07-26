@@ -46,6 +46,8 @@ try:
         'Check time offset of the HTTP "Date" response header against the local time')
     parser.add_argument('--url', '-u',
                         help='the URL to check', required=True)
+    parser.add_argument('--useragent', '-a',
+                        help='the User-Agent string to use', required=False, default='check_time_http')
     # https://kantarainitiative.github.io/SAMLprofiles/saml2int.html#_clock_skew
     parser.add_argument('--warn', '-w',
                         help='Offset to result in warning (seconds, default 180)',
@@ -73,6 +75,7 @@ try:
     args = parser.parse_args()
 
     url = args.url
+    useragent = args.useragent
     warn = args.warn
     crit = args.crit
     timeout = args.timeout
@@ -80,13 +83,19 @@ try:
     verbose = args.verbose
 
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-    req = requests.head(url, timeout=timeout, verify=verify)
+    req = requests.head(
+            url,
+            timeout=timeout,
+            verify=verify,
+            headers={'User-Agent': useragent}
+            )
 
     # Date with time zone
     utc_now = pytz.utc.localize(datetime.datetime.utcnow().replace(microsecond=0))
 
-    if 'Date' in req.headers:
-        http_date = email.utils.parsedate_to_datetime(req.headers['Date'])
+    # this is case insensitive
+    if 'date' in req.headers:
+        http_date = email.utils.parsedate_to_datetime(req.headers['date'])
         offset = int((http_date - utc_now).total_seconds())
         message = "Offset is {0} seconds".format(offset)
         if(verbose):
