@@ -10,9 +10,8 @@ Nagios or Ininga, Python3 with the `argparse`, `sys`, `requests`, and `pytz` mod
 
 ## Usage
 ```
-$ ./check_time_http --help
-usage: check_time_http [-h] --url URL [--warn WARN] [--crit CRIT]
-                       [--timeout TIMEOUT] [--verbose]
+usage: check_time_http [-h] --url URL [--useragent USERAGENT] [--warn WARN]
+                       [--crit CRIT] [--timeout TIMEOUT] [--verbose]
                        [--verify | --no-verify]
 
 Check time offset of the HTTP "Date" response header against the local time
@@ -20,6 +19,8 @@ Check time offset of the HTTP "Date" response header against the local time
 optional arguments:
   -h, --help            show this help message and exit
   --url URL, -u URL     the URL to check
+  --useragent USERAGENT, -a USERAGENT
+                        the User-Agent string to use
   --warn WARN, -w WARN  Offset to result in warning (seconds, default 180)
   --crit CRIT, -c CRIT  Offset to result in critical (seconds, default 300)
   --timeout TIMEOUT, -t TIMEOUT
