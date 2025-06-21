@@ -1,12 +1,16 @@
 # check\_time\_http
 
 
-A Nagios check to monitor the time offset between a web server (by examining its HTTP `Date` response header) and the local system (i.e. where the plugin is executed).
-
+A Nagios check to monitor the time offset between a web server (by examining
+its HTTP `Date` response header) and the local system (i.e. where the plugin
+is executed).
 
 ## Requirements
 
-Nagios or Ininga, Python3 with the `argparse`, `sys`, `requests`, and `pytz` modules. The latter is `python2-tz` on Debian based systems.
+* python3.3 or newer
+* [`requests`](https://pypi.org/project/requests/). Either `pip install requests`,
+  or with your distro's package manager, i.e. `apt-get install python3-requests`
+  on Debian.
 
 ## Usage
 ```
@@ -30,7 +34,8 @@ optional arguments:
   --no-verify           Do not verify SSL certificate
 ```
 
-## Notes
+## Caveats
+
 1. This plugin only looks at the HTTP Date header. Anything else is considered irrelevant and is not taken into account. So whether the actual service works fine (200), requires authentication (403), or even is failing (503) is not taken into account.
 
 2. Since this plugin uses the difference between a remote system and the local system, it is recommended to make sure the local system time is accurately synced to an NTP source, and also monitor this, for instance with [`check_ntp_date`](https://www.monitoring-plugins.org/doc/man/check_ntp_time.html).
