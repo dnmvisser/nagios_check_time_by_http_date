@@ -26,8 +26,7 @@
 import argparse
 import sys
 import requests
-import datetime
-import pytz
+from datetime import datetime, timezone
 import email.utils
 import urllib3
 
@@ -119,7 +118,7 @@ try:
     )
 
     # Date with time zone
-    utc_now = pytz.utc.localize(datetime.datetime.utcnow().replace(microsecond=0))
+    utc_now = datetime.now(timezone.utc)
 
     # this is case insensitive
     if "date" in req.headers:
