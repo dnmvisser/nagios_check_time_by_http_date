@@ -31,9 +31,11 @@ import pytz
 import email.utils
 import urllib3
 
+
 def nagios_exit(message, code):
     print(message)
     sys.exit(code)
+
 
 # start with clean slate
 ok_msg = []
@@ -42,35 +44,64 @@ crit_msg = []
 unknown_msg = []
 
 try:
-    parser = argparse.ArgumentParser(description=
-        'Check time offset of the HTTP "Date" response header against the local time')
-    parser.add_argument('--url', '-u',
-                        help='the URL to check', required=True)
-    parser.add_argument('--useragent', '-a',
-                        help='the User-Agent string to use', required=False, default='check_time_http')
+    parser = argparse.ArgumentParser(
+        description='Check time offset of the HTTP "Date" response header against the local time'
+    )
+    parser.add_argument("--url", "-u", help="the URL to check", required=True)
+    parser.add_argument(
+        "--useragent",
+        "-a",
+        help="the User-Agent string to use",
+        required=False,
+        default="check_time_http",
+    )
     # https://kantarainitiative.github.io/SAMLprofiles/saml2int.html#_clock_skew
-    parser.add_argument('--warn', '-w',
-                        help='Offset to result in warning (seconds, default 180)',
-                        required=False, type=int, default=180)
-    parser.add_argument('--crit', '-c',
-                        help='Offset to result in critical (seconds, default 300)',
-                        required=False, type=int, default=300)
-    parser.add_argument('--timeout', '-t',
-                        help='Timeout of the HTTP request (seconds)',
-                        required=False, type=int)
-    parser.add_argument('--verbose', '-v',
-                        help='Return verbose output',
-                        required=False, dest='verbose', action='store_true')
+    parser.add_argument(
+        "--warn",
+        "-w",
+        help="Offset to result in warning (seconds, default 180)",
+        required=False,
+        type=int,
+        default=180,
+    )
+    parser.add_argument(
+        "--crit",
+        "-c",
+        help="Offset to result in critical (seconds, default 300)",
+        required=False,
+        type=int,
+        default=300,
+    )
+    parser.add_argument(
+        "--timeout",
+        "-t",
+        help="Timeout of the HTTP request (seconds)",
+        required=False,
+        type=int,
+    )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        help="Return verbose output",
+        required=False,
+        dest="verbose",
+        action="store_true",
+    )
 
     verify_parser = parser.add_mutually_exclusive_group(required=False)
-    verify_parser.add_argument('--verify',
-            dest='verify', action='store_true',
-            help="Verify SSL certificate (default)")
-    verify_parser.add_argument('--no-verify',
-            dest='verify', action='store_false',
-            help="Do not verify SSL certificate")
+    verify_parser.add_argument(
+        "--verify",
+        dest="verify",
+        action="store_true",
+        help="Verify SSL certificate (default)",
+    )
+    verify_parser.add_argument(
+        "--no-verify",
+        dest="verify",
+        action="store_false",
+        help="Do not verify SSL certificate",
+    )
     parser.set_defaults(verify=True)
-
 
     args = parser.parse_args()
 
@@ -84,28 +115,25 @@ try:
 
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     req = requests.head(
-            url,
-            timeout=timeout,
-            verify=verify,
-            headers={'User-Agent': useragent}
-            )
+        url, timeout=timeout, verify=verify, headers={"User-Agent": useragent}
+    )
 
     # Date with time zone
     utc_now = pytz.utc.localize(datetime.datetime.utcnow().replace(microsecond=0))
 
     # this is case insensitive
-    if 'date' in req.headers:
-        http_date = email.utils.parsedate_to_datetime(req.headers['date'])
+    if "date" in req.headers:
+        http_date = email.utils.parsedate_to_datetime(req.headers["date"])
         offset = int((http_date - utc_now).total_seconds())
         message = "Offset is {0} seconds".format(offset)
-        if(verbose):
+        if verbose:
             message += ", URL: {0}".format(url)
             message += ", local date: {0}".format(utc_now)
             message += ", HTTP headers: {0}".format(req.headers)
 
-        if(abs(offset) > crit):
+        if abs(offset) > crit:
             crit_msg.append(message)
-        elif(abs(offset) > warn):
+        elif abs(offset) > warn:
             warn_msg.append(message)
         else:
             ok_msg.append(message)
@@ -116,10 +144,10 @@ except Exception as e:
 
 # Exit with accumulated message(s)
 if unknown_msg:
-    nagios_exit("UNKNOWN: " + ' '.join(unknown_msg), 3)
+    nagios_exit("UNKNOWN: " + " ".join(unknown_msg), 3)
 elif crit_msg:
-    nagios_exit("CRITICAL: " + ' '.join(crit_msg + warn_msg), 2)
+    nagios_exit("CRITICAL: " + " ".join(crit_msg + warn_msg), 2)
 elif warn_msg:
-    nagios_exit("WARNING: " + ' '.join(warn_msg), 1)
+    nagios_exit("WARNING: " + " ".join(warn_msg), 1)
 else:
-    nagios_exit("OK: " + ' '.join(ok_msg), 0)
+    nagios_exit("OK: " + " ".join(ok_msg), 0)
